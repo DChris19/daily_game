@@ -1,4 +1,5 @@
 from sqlalchemy import Boolean, Column, Integer, LargeBinary, String
+from sqlalchemy.orm import relationship
 from database import Base
 
 
@@ -11,3 +12,5 @@ class User(Base):
     email = Column(String(100), unique=True, nullable=False)
     active = Column(Boolean, default=True)
     is_admin = Column(Boolean, default=False)
+
+    goals = relationship("Goal", back_populates="user", lazy="selectin")

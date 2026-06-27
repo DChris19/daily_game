@@ -6,11 +6,9 @@ from database import get_db
 from auth.models import User
 from auth.schemas import UserCreate
 from jwt_utils import hash_password
+from core_config import settings
 
 router = APIRouter(prefix="/auth", tags=["register"])
-
-ADMIN_USERNAME = "Max19"
-ADMIN_PASSWORD = "mars41197"
 
 
 @router.post("/register", status_code=status.HTTP_201_CREATED)
@@ -30,8 +28,8 @@ async def register(user_data: UserCreate, db: AsyncSession = Depends(get_db)):
         )
 
     is_admin = (
-        user_data.username == ADMIN_USERNAME
-        and user_data.password == ADMIN_PASSWORD
+        user_data.username == settings.admin_username
+        and user_data.password == settings.admin_password
     )
 
     new_user = User(

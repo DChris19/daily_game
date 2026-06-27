@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Вхід — Daily Game</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #0e0e12;
+      --surface:   #17171f;
+      --border:    #2a2a38;
+      --accent:    #7c6af7;
+      --accent-h:  #9d8fff;
+      --text:      #e8e8f0;
+      --muted:     #6b6b80;
+      --danger:    #f05f6e;
+      --success:   #4ade80;
+      --radius:    14px;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    /* subtle grid background */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(var(--border) 1px, transparent 1px),
+        linear-gradient(90deg, var(--border) 1px, transparent 1px);
+      background-size: 40px 40px;
+      opacity: 0.3;
+      pointer-events: none;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 40px 36px;
+      width: 100%;
+      max-width: 400px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .logo {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 22px;
+      color: var(--accent);
+      letter-spacing: -0.5px;
+      margin-bottom: 8px;
+    }
+
+    .logo span { color: var(--text); }
+
+    .subtitle {
+      color: var(--muted);
+      font-size: 14px;
+      margin-bottom: 32px;
+    }
+
+    .field {
+      margin-bottom: 16px;
+    }
+
+    label {
+      display: block;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--muted);
+      margin-bottom: 6px;
+      letter-spacing: 0.3px;
+      text-transform: uppercase;
+    }
+
+    input {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 11px 14px;
+      color: var(--text);
+      font-family: 'Inter', sans-serif;
+      font-size: 15px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    input:focus {
+      border-color: var(--accent);
+    }
+
+    input::placeholder { color: var(--muted); }
+
+    .btn {
+      width: 100%;
+      margin-top: 8px;
+      padding: 13px;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-family: 'Inter', sans-serif;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+    }
+
+    .btn:hover  { background: var(--accent-h); }
+    .btn:active { transform: scale(0.98); }
+
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .error {
+      margin-top: 14px;
+      padding: 10px 14px;
+      background: rgba(240, 95, 110, 0.12);
+      border: 1px solid rgba(240, 95, 110, 0.3);
+      border-radius: 8px;
+      color: var(--danger);
+      font-size: 13px;
+      display: none;
+    }
+
+    .footer {
+      margin-top: 24px;
+      text-align: center;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .footer a {
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 500;
+    }
+
+    .footer a:hover { color: var(--accent-h); }
+
+    .spinner {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      vertical-align: middle;
+      margin-right: 6px;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="logo">Daily<span>Game</span></div>
+    <p class="subtitle">Увійди, щоб продовжити</p>
+
+    <div class="field">
+      <label for="username">Логін</label>
+      <input id="username" type="text" placeholder="твій_нікнейм" autocomplete="username"/>
+    </div>
+
+    <div class="field">
+      <label for="password">Пароль</label>
+      <input id="password" type="password" placeholder="••••••••" autocomplete="current-password"/>
+    </div>
+
+    <button class="btn" id="loginBtn" onclick="login()">Увійти</button>
+
+    <div class="error" id="errorMsg"></div>
+
+    <div class="footer">
+      Немає акаунту? <a href="register.html">Зареєструватись</a>
+    </div>
+  </div>
+
+  <script>
+    const API = 'http://127.0.0.1:8000';
+
+    // якщо вже залогінений — одразу на головну
+    if (localStorage.getItem('token')) {
+      window.location.href = 'index.html';
+    }
+
+    // логін по Enter
+    document.getElementById('password').addEventListener('keydown', e => {
+      if (e.key === 'Enter') login();
+    });
+    document.getElementById('username').addEventListener('keydown', e => {
+      if (e.key === 'Enter') login();
+    });
+
+    async function login() {
+      const username = document.getElementById('username').value.trim();
+      const password = document.getElementById('password').value;
+      const btn      = document.getElementById('loginBtn');
+      const errEl    = document.getElementById('errorMsg');
+
+      errEl.style.display = 'none';
+
+      if (!username || !password) {
+        showError('Заповни всі поля');
+        return;
+      }
+
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span>Входжу...';
+
+      try {
+        const body = new URLSearchParams({ username, password });
+        const res  = await fetch(`${API}/jwt/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body,
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          showError(data.detail || 'Невірний логін або пароль');
+          return;
+        }
+
+        localStorage.setItem('token', data.access_token);
+        window.location.href = 'index.html';
+
+      } catch {
+        showError('Сервер недоступний. Перевір підключення.');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = 'Увійти';
+      }
+    }
+
+    function showError(msg) {
+      const el = document.getElementById('errorMsg');
+      el.textContent = msg;
+      el.style.display = 'block';
+    }
+  </script>
+</body>
+</html>

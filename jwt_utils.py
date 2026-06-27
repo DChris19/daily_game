@@ -6,11 +6,11 @@ from core_config import settings
 
 def encode_jwt(
     payload: dict,
-    private_key: str = settings.private_key_path.read_text(),
     algorithm: str = settings.algorithm,
     expire_time_delta: timedelta | None = None,
     expire_minutes: int = settings.access_token_expire_minutes,
 ) -> str:
+    private_key = settings.private_key_path.read_text()
     to_encode = payload.copy()
     now = datetime.now(timezone.utc)
     expire = now + (expire_time_delta or timedelta(minutes=expire_minutes))
@@ -20,9 +20,9 @@ def encode_jwt(
 
 def decode_jwt(
     token: str | bytes,
-    public_key: str = settings.public_key_path.read_text(),
     algorithm: str = settings.algorithm,
 ) -> dict:
+    public_key = settings.public_key_path.read_text()
     return jwt.decode(token, public_key, algorithms=[algorithm])
 
 

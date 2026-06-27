@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Адмін-панель — Daily Game</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #0e0e12; --surface: #17171f; --surface2: #1e1e28;
+      --border: #2a2a38; --accent: #7c6af7; --accent-h: #9d8fff;
+      --text: #e8e8f0; --muted: #6b6b80; --danger: #f05f6e;
+      --success: #4ade80; --warning: #fbbf24; --radius: 14px;
+    }
+    body {
+      background: var(--bg); color: var(--text);
+      font-family: 'Inter', sans-serif; min-height: 100vh; padding-bottom: 40px;
+    }
+    body::before {
+      content: ''; position: fixed; inset: 0;
+      background-image: linear-gradient(var(--border) 1px, transparent 1px),
+                        linear-gradient(90deg, var(--border) 1px, transparent 1px);
+      background-size: 40px 40px; opacity: 0.2; pointer-events: none;
+    }
+
+    header {
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(14,14,18,0.85); backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      padding: 0 24px; height: 60px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .logo { font-family: 'Space Grotesk', sans-serif; font-size: 20px; color: var(--accent); }
+    .logo span { color: var(--text); }
+    .header-right { display: flex; align-items: center; gap: 12px; }
+    .badge {
+      background: rgba(240,95,110,0.15); border: 1px solid rgba(240,95,110,0.3);
+      color: var(--danger); font-size: 12px; font-weight: 600;
+      padding: 3px 10px; border-radius: 20px; letter-spacing: 0.5px;
+    }
+    .back-btn {
+      background: none; border: 1px solid var(--border); border-radius: 8px;
+      color: var(--muted); font-family: 'Inter', sans-serif; font-size: 13px;
+      padding: 6px 12px; cursor: pointer; transition: border-color 0.2s, color 0.2s;
+      text-decoration: none;
+    }
+    .back-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+    main { max-width: 900px; margin: 0 auto; padding: 32px 24px; position: relative; z-index: 1; }
+
+    .page-title {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 26px; font-weight: 700; margin-bottom: 6px;
+    }
+    .page-sub { color: var(--muted); font-size: 14px; margin-bottom: 32px; }
+
+    /* STATS */
+    .stats-row {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 12px; margin-bottom: 32px;
+    }
+    .stat-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 18px 20px;
+    }
+    .stat-label { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+    .stat-value { font-family: 'Space Grotesk', sans-serif; font-size: 28px; font-weight: 700; }
+    .stat-value.danger { color: var(--danger); }
+    .stat-value.success { color: var(--success); }
+    .stat-value.accent { color: var(--accent); }
+
+    /* DANGER ZONE */
+    .danger-zone {
+      background: rgba(240,95,110,0.06); border: 1px solid rgba(240,95,110,0.2);
+      border-radius: var(--radius); padding: 20px 24px;
+      margin-bottom: 32px;
+      display: flex; align-items: center; justify-content: space-between; gap: 16px;
+    }
+    .danger-zone h3 { font-size: 15px; font-weight: 600; color: var(--danger); margin-bottom: 4px; }
+    .danger-zone p { font-size: 13px; color: var(--muted); }
+    .btn-danger {
+      padding: 10px 20px; background: rgba(240,95,110,0.15);
+      border: 1px solid rgba(240,95,110,0.4); border-radius: 8px;
+      color: var(--danger); font-family: 'Inter', sans-serif;
+      font-size: 14px; font-weight: 600; cursor: pointer; white-space: nowrap;
+      transition: background 0.2s;
+    }
+    .btn-danger:hover { background: rgba(240,95,110,0.25); }
+
+    /* TABLE */
+    .section-title {
+      font-size: 16px; font-weight: 600; margin-bottom: 14px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .table-wrap {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); overflow: hidden;
+    }
+    table { width: 100%; border-collapse: collapse; }
+    thead { background: var(--surface2); }
+    th {
+      padding: 12px 16px; text-align: left;
+      font-size: 12px; font-weight: 500; color: var(--muted);
+      text-transform: uppercase; letter-spacing: 0.5px;
+      border-bottom: 1px solid var(--border);
+    }
+    td {
+      padding: 14px 16px; font-size: 14px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: middle;
+    }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: var(--surface2); }
+
+    .tag {
+      display: inline-block; padding: 3px 8px; border-radius: 20px;
+      font-size: 12px; font-weight: 500;
+    }
+    .tag-admin { background: rgba(124,106,247,0.15); color: var(--accent); border: 1px solid rgba(124,106,247,0.3); }
+    .tag-user  { background: rgba(107,107,128,0.15); color: var(--muted);  border: 1px solid var(--border); }
+    .tag-active   { background: rgba(74,222,128,0.12); color: var(--success); border: 1px solid rgba(74,222,128,0.3); }
+    .tag-inactive { background: rgba(240,95,110,0.12); color: var(--danger);  border: 1px solid rgba(240,95,110,0.3); }
+
+    .delete-btn {
+      background: none; border: 1px solid rgba(240,95,110,0.3);
+      border-radius: 6px; color: var(--danger); font-size: 12px;
+      padding: 5px 10px; cursor: pointer; transition: background 0.15s;
+      font-family: 'Inter', sans-serif;
+    }
+    .delete-btn:hover { background: rgba(240,95,110,0.12); }
+    .delete-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    /* loading / empty */
+    .loading { text-align: center; padding: 40px; color: var(--muted); }
+    .spinner {
+      display: inline-block; width: 24px; height: 24px;
+      border: 3px solid var(--border); border-top-color: var(--accent);
+      border-radius: 50%; animation: spin 0.7s linear infinite; margin-bottom: 10px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* toast */
+    .toast {
+      position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%) translateY(20px);
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 10px; padding: 12px 20px;
+      font-size: 14px; color: var(--text);
+      opacity: 0; transition: opacity 0.25s, transform 0.25s;
+      pointer-events: none; z-index: 200; white-space: nowrap;
+    }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+    .toast.success { border-color: rgba(74,222,128,0.4); color: var(--success); }
+    .toast.error   { border-color: rgba(240,95,110,0.4); color: var(--danger); }
+
+    /* modal */
+    .modal-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.6);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 300; opacity: 0; pointer-events: none; transition: opacity 0.2s;
+    }
+    .modal-overlay.show { opacity: 1; pointer-events: all; }
+    .modal {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 28px 32px;
+      max-width: 400px; width: 90%;
+    }
+    .modal h3 { font-size: 18px; font-weight: 600; margin-bottom: 10px; }
+    .modal p  { font-size: 14px; color: var(--muted); margin-bottom: 24px; line-height: 1.5; }
+    .modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
+    .btn-cancel {
+      padding: 10px 18px; background: none; border: 1px solid var(--border);
+      border-radius: 8px; color: var(--muted); font-family: 'Inter', sans-serif;
+      font-size: 14px; cursor: pointer;
+    }
+    .btn-cancel:hover { border-color: var(--accent); color: var(--accent); }
+    .btn-confirm {
+      padding: 10px 18px; background: var(--danger); border: none;
+      border-radius: 8px; color: #fff; font-family: 'Inter', sans-serif;
+      font-size: 14px; font-weight: 600; cursor: pointer;
+    }
+    .btn-confirm:hover { opacity: 0.85; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="logo">Daily<span>Game</span> <span style="font-size:14px;color:var(--muted);font-family:Inter">/ адмін</span></div>
+    <div class="header-right">
+      <span class="badge">ADMIN</span>
+      <a class="back-btn" href="index.html">← До сайту</a>
+    </div>
+  </header>
+
+  <main>
+    <h1 class="page-title">Панель адміністратора</h1>
+    <p class="page-sub" id="pageSub">Завантаження...</p>
+
+    <!-- STATS -->
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="stat-label">Всього користувачів</div>
+        <div class="stat-value accent" id="statTotal">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Активних</div>
+        <div class="stat-value success" id="statActive">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Адмінів</div>
+        <div class="stat-value" id="statAdmins">—</div>
+      </div>
+    </div>
+
+    <!-- DANGER ZONE -->
+    <div class="danger-zone">
+      <div>
+        <h3>⚠️ Небезпечна зона</h3>
+        <p>Видалити всіх користувачів з бази даних. Дія незворотна.</p>
+      </div>
+      <button class="btn-danger" onclick="confirmResetDB()">Reset DB</button>
+    </div>
+
+    <!-- USERS TABLE -->
+    <div class="section-title">
+      <span>Користувачі</span>
+    </div>
+    <div class="table-wrap">
+      <div class="loading" id="tableLoading">
+        <div class="spinner"></div>
+        <div>Завантаження...</div>
+      </div>
+      <table id="usersTable" style="display:none">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Логін</th>
+            <th>Email</th>
+            <th>Статус</th>
+            <th>Роль</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="usersBody"></tbody>
+      </table>
+    </div>
+  </main>
+
+  <!-- CONFIRM MODAL -->
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal">
+      <h3 id="modalTitle">Підтвердження</h3>
+      <p id="modalText">Ви впевнені?</p>
+      <div class="modal-actions">
+        <button class="btn-cancel" onclick="closeModal()">Скасувати</button>
+        <button class="btn-confirm" id="modalConfirmBtn">Підтвердити</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    const API   = 'http://127.0.0.1:8000';
+    const token = localStorage.getItem('token');
+
+    if (!token) window.location.href = 'login.html';
+
+    function parseJwt(t) {
+      try { return JSON.parse(atob(t.split('.')[1])); } catch { return {}; }
+    }
+
+    const payload = parseJwt(token);
+    if (!payload.is_admin) window.location.href = 'index.html';
+
+    function authHeaders() {
+      return { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' };
+    }
+
+    function showToast(msg, type = '') {
+      const el = document.getElementById('toast');
+      el.textContent = msg;
+      el.className = `toast ${type} show`;
+      setTimeout(() => { el.className = `toast ${type}`; }, 3000);
+    }
+
+    // MODAL
+    let modalCallback = null;
+    function showModal(title, text, callback) {
+      document.getElementById('modalTitle').textContent = title;
+      document.getElementById('modalText').textContent = text;
+      document.getElementById('modalConfirmBtn').onclick = () => { closeModal(); callback(); };
+      document.getElementById('modalOverlay').classList.add('show');
+    }
+    function closeModal() {
+      document.getElementById('modalOverlay').classList.remove('show');
+    }
+
+    async function loadUsers() {
+      try {
+        const res = await fetch(`${API}/admin/users`, { headers: authHeaders() });
+        if (res.status === 401 || res.status === 403) { window.location.href = 'login.html'; return; }
+        const users = await res.json();
+
+        document.getElementById('statTotal').textContent  = users.length;
+        document.getElementById('statActive').textContent = users.filter(u => u.active).length;
+        document.getElementById('statAdmins').textContent = users.filter(u => u.is_admin).length;
+        document.getElementById('pageSub').textContent    = `${users.length} користувачів у системі`;
+
+        const tbody = document.getElementById('usersBody');
+        tbody.innerHTML = users.map(u => `
+          <tr id="row-${u.id}">
+            <td style="color:var(--muted)">#${u.id}</td>
+            <td><strong>${escHtml(u.username)}</strong></td>
+            <td style="color:var(--muted)">${escHtml(u.email)}</td>
+            <td><span class="tag ${u.active ? 'tag-active' : 'tag-inactive'}">${u.active ? 'Активний' : 'Неактивний'}</span></td>
+            <td><span class="tag ${u.is_admin ? 'tag-admin' : 'tag-user'}">${u.is_admin ? 'Адмін' : 'Користувач'}</span></td>
+            <td>
+              ${!u.is_admin ? `<button class="delete-btn" onclick="confirmDeleteUser(${u.id}, '${escHtml(u.username)}')">Видалити</button>` : '<span style="color:var(--muted);font-size:12px">—</span>'}
+            </td>
+          </tr>
+        `).join('');
+
+        document.getElementById('tableLoading').style.display = 'none';
+        document.getElementById('usersTable').style.display = 'table';
+
+      } catch {
+        document.getElementById('tableLoading').innerHTML = '<div style="color:var(--danger);padding:40px;text-align:center">Помилка завантаження</div>';
+      }
+    }
+
+    function confirmDeleteUser(id, username) {
+      showModal(
+        '🗑 Видалити користувача',
+        `Ви впевнені що хочете видалити "${username}"? Всі його цілі також будуть видалені.`,
+        () => deleteUser(id)
+      );
+    }
+
+    async function deleteUser(id) {
+      try {
+        const res = await fetch(`${API}/admin/users/${id}`, {
+          method: 'DELETE', headers: authHeaders(),
+        });
+        const data = await res.json();
+        if (res.ok) {
+          document.getElementById(`row-${id}`)?.remove();
+          const total = parseInt(document.getElementById('statTotal').textContent) - 1;
+          document.getElementById('statTotal').textContent = total;
+          showToast(data.detail, 'success');
+        } else {
+          showToast(data.detail || 'Помилка', 'error');
+        }
+      } catch {
+        showToast('Помилка з\'єднання', 'error');
+      }
+    }
+
+    function confirmResetDB() {
+      showModal(
+        '⚠️ Reset DB',
+        'Це видалить ВСІХ користувачів з бази даних. Дія незворотна. Ви впевнені?',
+        resetDB
+      );
+    }
+
+    async function resetDB() {
+      try {
+        const res = await fetch(`${API}/admin/reset-db`, {
+          method: 'DELETE', headers: authHeaders(),
+        });
+        const data = await res.json();
+        if (res.ok) {
+          showToast(data.detail, 'success');
+          setTimeout(() => {
+            localStorage.removeItem('token');
+            window.location.href = 'login.html';
+          }, 1500);
+        } else {
+          showToast(data.detail || 'Помилка', 'error');
+        }
+      } catch {
+        showToast('Помилка з\'єднання', 'error');
+      }
+    }
+
+    function escHtml(s) {
+      return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+
+    loadUsers();
+  </script>
+</body>
+</html>
