@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Нова ціль — Daily Game</title>
+  <title>Редагувати ціль — Daily Game</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Nunito:wght@700;800&display=swap" rel="stylesheet">
   <style>
@@ -23,7 +23,6 @@
                         linear-gradient(90deg, var(--border) 1px, transparent 1px);
       background-size: 40px 40px; opacity: 0.2; pointer-events: none;
     }
-
     header {
       position: sticky; top: 0; z-index: 100;
       background: rgba(14,14,18,0.85); backdrop-filter: blur(12px);
@@ -41,15 +40,8 @@
     .logo { font-family: 'Nunito', sans-serif; font-size: 20px; color: var(--accent); }
     .logo span { color: var(--text); }
 
-    main {
-      max-width: 520px; margin: 0 auto;
-      padding: 40px 24px; position: relative; z-index: 1;
-    }
-
-    .page-title {
-      font-family: 'Nunito', sans-serif;
-      font-size: 26px; font-weight: 700; margin-bottom: 6px;
-    }
+    main { max-width: 520px; margin: 0 auto; padding: 40px 24px; position: relative; z-index: 1; }
+    .page-title { font-family: 'Nunito', sans-serif; font-size: 26px; font-weight: 700; margin-bottom: 6px; }
     .page-sub { color: var(--muted); font-size: 14px; margin-bottom: 36px; }
 
     .card {
@@ -74,12 +66,7 @@
     input:focus, textarea:focus { border-color: var(--accent); }
     input::placeholder, textarea::placeholder { color: var(--muted); }
     textarea { resize: vertical; min-height: 90px; }
-
-    /* datetime — прибираємо дефолтний стиль */
-    input[type="datetime-local"]::-webkit-calendar-picker-indicator {
-      filter: invert(0.5);
-      cursor: pointer;
-    }
+    input[type="datetime-local"]::-webkit-calendar-picker-indicator { filter: invert(0.5); cursor: pointer; }
 
     .char-count { text-align: right; font-size: 12px; color: var(--muted); margin-top: 4px; }
 
@@ -93,9 +80,7 @@
     .btn-primary:hover { background: var(--accent-h); }
     .btn-primary:active { transform: scale(0.98); }
     .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
-    .btn-secondary {
-      background: none; border: 1px solid var(--border); color: var(--muted);
-    }
+    .btn-secondary { background: none; border: 1px solid var(--border); color: var(--muted); }
     .btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
 
     .error {
@@ -104,7 +89,15 @@
       border-radius: 8px; color: var(--danger); font-size: 13px; display: none;
     }
 
+    .loading {
+      text-align: center; padding: 60px; color: var(--muted);
+    }
     .spinner {
+      display: inline-block; width: 24px; height: 24px;
+      border: 3px solid var(--border); border-top-color: var(--accent);
+      border-radius: 50%; animation: spin 0.7s linear infinite; margin-bottom: 10px;
+    }
+    .btn-spinner {
       display: inline-block; width: 16px; height: 16px;
       border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff;
       border-radius: 50%; animation: spin 0.7s linear infinite;
@@ -120,39 +113,35 @@
   </header>
 
   <main>
-    <h1 class="page-title">Нова ціль</h1>
-    <p class="page-sub">Опиши що хочеш досягти</p>
+    <h1 class="page-title">Редагувати ціль</h1>
+    <p class="page-sub">Зміни будь-яке поле</p>
 
-    <div class="card">
+    <div id="loadingEl" class="loading">
+      <div class="spinner"></div>
+      <div>Завантаження...</div>
+    </div>
+
+    <div class="card" id="formCard" style="display:none">
       <div class="field">
         <label for="title">Назва *</label>
-        <input
-          id="title" type="text"
-          placeholder="Наприклад: Читати 20 хвилин"
-          maxlength="100"
-          oninput="updateCount()"
-        />
+        <input id="title" type="text" maxlength="100" oninput="updateCount()"/>
         <div class="char-count"><span id="charCount">0</span>/100</div>
       </div>
 
       <div class="field">
         <label for="description">Опис <span style="font-weight:400;text-transform:none">(необов'язково)</span></label>
-        <textarea
-          id="description"
-          placeholder="Навіщо ця ціль? Як ти будеш її виконувати?"
-          maxlength="500"
-        ></textarea>
+        <textarea id="description" maxlength="500"></textarea>
       </div>
 
       <div class="field">
         <label for="scheduled_at">Запланувати на <span style="font-weight:400;text-transform:none">(необов'язково)</span></label>
         <input id="scheduled_at" type="datetime-local"/>
-        <span class="hint">Якщо не вказано — ціль без конкретного часу</span>
+        <span class="hint">Залиш порожнім щоб прибрати дату</span>
       </div>
 
       <div class="actions">
         <button class="btn btn-secondary" onclick="window.location.href='index.html'">Скасувати</button>
-        <button class="btn btn-primary" id="createBtn" onclick="createGoal()">Створити ціль</button>
+        <button class="btn btn-primary" id="saveBtn" onclick="saveGoal()">Зберегти</button>
       </div>
 
       <div class="error" id="errorMsg"></div>
@@ -162,49 +151,75 @@
   <script>
     const API   = 'http://127.0.0.1:8000';
     const token = localStorage.getItem('token');
-
     if (!token) window.location.href = 'login.html';
 
-    function updateCount() {
-      const val = document.getElementById('title').value.length;
-      document.getElementById('charCount').textContent = val;
+    // отримуємо goal_id з URL параметра ?id=123
+    const params = new URLSearchParams(window.location.search);
+    const goalId = params.get('id');
+    if (!goalId) window.location.href = 'index.html';
+
+    function authHeaders() {
+      return { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' };
     }
 
-    async function createGoal() {
+    function updateCount() {
+      document.getElementById('charCount').textContent = document.getElementById('title').value.length;
+    }
+
+    function toLocalDatetimeString(isoStr) {
+      if (!isoStr) return '';
+      const d = new Date(isoStr);
+      // формат для datetime-local: YYYY-MM-DDTHH:MM
+      const pad = n => String(n).padStart(2, '0');
+      return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+    }
+
+    async function loadGoal() {
+      try {
+        const res = await fetch(`${API}/goals/${goalId}`, { headers: authHeaders() });
+        if (res.status === 401) { window.location.href = 'login.html'; return; }
+        if (res.status === 404) { window.location.href = 'index.html'; return; }
+
+        const goal = await res.json();
+
+        document.getElementById('title').value       = goal.title;
+        document.getElementById('description').value = goal.description || '';
+        document.getElementById('scheduled_at').value = toLocalDatetimeString(goal.scheduled_at);
+        updateCount();
+
+        document.getElementById('loadingEl').style.display = 'none';
+        document.getElementById('formCard').style.display  = 'block';
+
+      } catch {
+        document.getElementById('loadingEl').innerHTML = '<div style="color:var(--danger)">Помилка завантаження</div>';
+      }
+    }
+
+    async function saveGoal() {
       const title        = document.getElementById('title').value.trim();
       const description  = document.getElementById('description').value.trim() || null;
       const scheduled_at = document.getElementById('scheduled_at').value || null;
-      const btn          = document.getElementById('createBtn');
+      const btn          = document.getElementById('saveBtn');
       const errEl        = document.getElementById('errorMsg');
 
       errEl.style.display = 'none';
-
       if (!title) { showError('Введи назву цілі'); return; }
-      if (title.length > 100) { showError('Назва занадто довга'); return; }
 
       btn.disabled = true;
-      btn.innerHTML = '<span class="spinner"></span>Створюю...';
+      btn.innerHTML = '<span class="btn-spinner"></span>Зберігаю...';
 
       try {
         const body = { title, description };
-        // scheduled_at треба в ISO форматі
         if (scheduled_at) body.scheduled_at = new Date(scheduled_at).toISOString();
 
-        const res = await fetch(`${API}/goals`, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
+        const res = await fetch(`${API}/goals/${goalId}`, {
+          method: 'PATCH',
+          headers: authHeaders(),
           body: JSON.stringify(body),
         });
 
         const data = await res.json();
-
-        if (!res.ok) {
-          showError(data.detail || 'Помилка створення цілі');
-          return;
-        }
+        if (!res.ok) { showError(data.detail || 'Помилка збереження'); return; }
 
         window.location.href = 'index.html';
 
@@ -212,7 +227,7 @@
         showError('Сервер недоступний. Перевір підключення.');
       } finally {
         btn.disabled = false;
-        btn.innerHTML = 'Створити ціль';
+        btn.innerHTML = 'Зберегти';
       }
     }
 
@@ -221,6 +236,8 @@
       el.textContent = msg;
       el.style.display = 'block';
     }
+
+    loadGoal();
   </script>
 </body>
 </html>

@@ -4,7 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from database import get_db
 from auth.auth_router import get_current_active_user
 from auth.models import User
-from goals.goal_schemas import GoalCreate, GoalResponse, GoalCompleteResponse
+from goals.goal_schemas import GoalCreate, GoalUpdate, GoalResponse, GoalCompleteResponse
 from goals import goal_service
 
 router = APIRouter(prefix="/goals", tags=["goals"])
@@ -33,6 +33,38 @@ async def get_my_goals(
     return await goal_service.get_user_goals(db=db, user_id=current_user.id)
 
 
+@router.get("/{goal_id}", response_model=GoalResponse)
+async def get_goal(
+    goal_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    goal = await goal_service.get_goal_by_id(db=db, goal_id=goal_id, user_id=current_user.id)
+    if not goal:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="goal not found")
+    return goal
+
+
+@router.patch("/{goal_id}", response_model=GoalResponse)
+async def update_goal(
+    goal_id: int,
+    goal_data: GoalUpdate,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    goal = await goal_service.update_goal(
+        db=db,
+        goal_id=goal_id,
+        user_id=current_user.id,
+        title=goal_data.title,
+        description=goal_data.description,
+        scheduled_at=goal_data.scheduled_at,
+    )
+    if not goal:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="goal not found")
+    return goal
+
+
 @router.patch("/{goal_id}/complete", response_model=GoalCompleteResponse)
 async def complete_goal(
     goal_id: int,
@@ -43,10 +75,7 @@ async def complete_goal(
         db=db, goal_id=goal_id, user_id=current_user.id
     )
     if not goal:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="goal not found",
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="goal not found")
     message = goal_service.get_streak_message(goal.streak_count, goal.title)
     return GoalCompleteResponse(goal=goal, message=message)
 
@@ -61,7 +90,4 @@ async def delete_goal(
         db=db, goal_id=goal_id, user_id=current_user.id
     )
     if not deleted:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="goal not found",
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="goal not found")

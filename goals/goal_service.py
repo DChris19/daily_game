@@ -25,6 +25,35 @@ async def get_user_goals(db: AsyncSession, user_id: int) -> list[Goal]:
     return result.scalars().all()
 
 
+async def get_goal_by_id(db: AsyncSession, goal_id: int, user_id: int) -> Goal | None:
+    result = await db.execute(
+        select(Goal).where(Goal.id == goal_id, Goal.user_id == user_id)
+    )
+    return result.scalar_one_or_none()
+
+
+async def update_goal(db: AsyncSession, goal_id: int, user_id: int,
+                      title: str | None, description: str | None,
+                      scheduled_at: datetime | None) -> Goal | None:
+    result = await db.execute(
+        select(Goal).where(Goal.id == goal_id, Goal.user_id == user_id)
+    )
+    goal = result.scalar_one_or_none()
+    if not goal:
+        return None
+
+    if title is not None:
+        goal.title = title
+    if description is not None:
+        goal.description = description
+    if scheduled_at is not None:
+        goal.scheduled_at = scheduled_at
+
+    await db.commit()
+    await db.refresh(goal)
+    return goal
+
+
 async def complete_goal(db: AsyncSession, goal_id: int, user_id: int) -> Goal | None:
     result = await db.execute(
         select(Goal).where(Goal.id == goal_id, Goal.user_id == user_id)

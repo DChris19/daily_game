@@ -8,6 +8,12 @@ class GoalCreate(BaseModel):
     scheduled_at: datetime | None = None
 
 
+class GoalUpdate(BaseModel):
+    title: str | None = None
+    description: str | None = None
+    scheduled_at: datetime | None = None
+
+
 class GoalResponse(BaseModel):
     id: int
     title: str

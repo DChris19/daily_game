@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Мої цілі — Daily Game</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Nunito:wght@700;800&display=swap" rel="stylesheet">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
@@ -33,7 +33,7 @@
       padding: 0 24px; height: 60px;
       display: flex; align-items: center; justify-content: space-between;
     }
-    .logo { font-family: 'Space Grotesk', sans-serif; font-size: 20px; color: var(--accent); }
+    .logo { font-family: 'Nunito', sans-serif; font-size: 20px; color: var(--accent); }
     .logo span { color: var(--text); }
     .header-right { display: flex; align-items: center; gap: 16px; }
     .username { font-size: 14px; color: var(--muted); }
@@ -55,7 +55,7 @@
     main { max-width: 900px; margin: 0 auto; padding: 32px 24px; position: relative; z-index: 1; }
 
     .page-title {
-      font-family: 'Space Grotesk', sans-serif;
+      font-family: 'Nunito', sans-serif;
       font-size: 28px; font-weight: 700;
       margin-bottom: 8px;
     }
@@ -281,7 +281,7 @@
       return `
         <div class="goal-card ${isDone ? 'completed' : ''}" id="card-${goal.id}">
           <div class="card-menu">
-            <button class="menu-item disabled">✏️ Змінити (скоро)</button>
+            <button class="menu-item" onclick="window.location.href='edit-goal.html?id=${goal.id}'">✏️ Змінити</button>
             <button class="menu-item danger" onclick="deleteGoal(${goal.id}, event)">🗑 Видалити</button>
           </div>
 
